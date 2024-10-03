@@ -12,6 +12,11 @@ const isEmailValid = (email) => {
   return validator.isEmail(email);
 };
 
+const isValidPassword = (password) => {
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+  return passwordRegex.test(password);
+}; 
+
 const createUser = async (req) => {
 
   if (!req.is('application/json')) {
@@ -33,7 +38,9 @@ const createUser = async (req) => {
     || typeof password !== 'string') {
       throw new Error("Please provide Name and Password as a String!");
   }
-  
+  if (!isValidPassword(password)) {
+    throw new Error('Password must be at least 6 characters long, contain at least one uppercase letter, one lowercase letter, one number, and one special character.');
+  } 
   const existingUser = await User.findOne({ where: { email } });
   if (existingUser) {
     throw new Error('Email id already created !');
