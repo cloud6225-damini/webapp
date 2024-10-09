@@ -64,4 +64,3 @@ jobs:
           DB_USER: ${{secrets.DB_USER}}
           DB_HOST: ${{secrets.DB_HOST}}
  
-has context menu
