@@ -1,6 +1,5 @@
 const { healthCheckAPI } = require('../services/healthService');
 
-// Controller to handle the /healthz endpoint
 const getHealthStatus = async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     const isDatabaseConnected = await healthCheckAPI();
