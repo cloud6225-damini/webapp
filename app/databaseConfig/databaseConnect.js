@@ -7,6 +7,7 @@ const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, proces
     dialect: "mysql",
 });
 
+
 const checkDbConnection = async () => {
     try {
         await sequelize.authenticate();
@@ -25,7 +26,7 @@ const createDatabase = async () => {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
       });
-      
+
       await newConnection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME}\`;`);
       console.log("Database connection successful!");
       await createNewTable();
