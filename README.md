@@ -21,7 +21,7 @@ DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=your_db_name
 DB_PORT=3306
-PORT=8080
+PORT=3000
 
 ## Install dependencies
 
