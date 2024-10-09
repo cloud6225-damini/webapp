@@ -1,0 +1,49 @@
+name: Integaration Test Workflow
+
+on:
+  push:
+    branches: [assignment03]
+
+env:
+  PORT: ${{secrets.PORT}}
+  DB_NAME: ${{secrets.DB_NAME}}
+  DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+  DB_USER: ${{secrets.DB_USER}}
+  DB_HOST: ${{secrets.DB_HOST}}
+  DB_DIALECT: ${{secrets.DB_DIALECT}}
+
+jobs:
+  build:
+    name: Integration Test Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout to our code
+        uses: actions/checkout@v3
+
+      - name: start mysql server already installed in the image
+        run: |
+          sudo systemctl start mysql.service
+          sudo mysql --version
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: "check env"
+        run: echo ${{ secrets.DB_NAME }}
+
+      - name: Run Test
+        run: npm test
+        env:
+            PORT: ${{secrets.PORT}}
+            DB_NAME: ${{secrets.DB_NAME}}
+            DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+            DB_USER: ${{secrets.DB_USER}}
+            DB_HOST: ${{secrets.DB_HOST}}
+            DB_DIALECT: ${{secrets.DB_DIALECT}}
+          
