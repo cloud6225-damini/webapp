@@ -1,49 +1,63 @@
-name: Integaration Test Workflow
-
 on:
   push:
-    branches: [assignment03]
-
-env:
-  PORT: ${{secrets.PORT}}
-  DB_NAME: ${{secrets.DB_NAME}}
-  DB_PASSWORD: ${{secrets.DB_PASSWORD}}
-  DB_USER: ${{secrets.DB_USER}}
-  DB_HOST: ${{secrets.DB_HOST}}
-  DB_DIALECT: ${{secrets.DB_DIALECT}}
-
+    branches:
+        - assignment03
+ 
 jobs:
   build:
-    name: Integration Test Check
+    name: Continuous Integration Test
     runs-on: ubuntu-latest
-
+    environment: dev
+ 
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+          DB_NAME: ${{secrets.DB_NAME}}
+          DB_USER: ${{secrets.DB_USER}}
+          DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+ 
     steps:
       - name: Checkout to our code
         uses: actions/checkout@v3
-
-      - name: start mysql server already installed in the image
-        run: |
-          sudo systemctl start mysql.service
-          sudo mysql --version
-
+ 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: "20.x"
-
+ 
       - name: Install Dependencies
-        run: npm ci
-
-      - name: "check env"
-        run: echo ${{ secrets.DB_NAME }}
-
+        run: npm i
+       
+ 
+      - name: Configure Environment Variables
+        run: |
+          echo DB_USER=${{ secrets.DB_USER }}
+          echo DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          echo DB_NAME=${{ secrets.DB_NAME }}
+          echo DB_HOST=${{ secrets.DB_HOST }}
+          echo PORT=${{ secrets.PORT }}
+ 
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h "127.0.0.1" --silent; do
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+          done
+ 
       - name: Run Test
-        run: npm test
+        run: npm test -- --forceExit
         env:
-            PORT: ${{secrets.PORT}}
-            DB_NAME: ${{secrets.DB_NAME}}
-            DB_PASSWORD: ${{secrets.DB_PASSWORD}}
-            DB_USER: ${{secrets.DB_USER}}
-            DB_HOST: ${{secrets.DB_HOST}}
-            DB_DIALECT: ${{secrets.DB_DIALECT}}
-          
+          PORT: ${{secrets.PORT}}
+          DB_NAME: ${{secrets.DB_NAME}}
+          DB_PASSWORD: ${{secrets.DB_PASSWORD}}
+          DB_USER: ${{secrets.DB_USER}}
+          HOST: ${{secrets.DB_HOST}}
