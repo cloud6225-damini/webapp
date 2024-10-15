@@ -48,7 +48,7 @@ describe("Integration Tests for User API", () => {
       .put("/v1/user/self")
       .send(reqBody)
       .set("Authorization", `Basic ${base64TokenforPut}`);
-    expect(putUserResponse.statusCode).toBe(204); 
+    expect(putUserResponse.statusCode).toBe(2004); 
 
     const base64Token = Buffer.from(`${authToken.email}:${reqBody.password}`).toString("base64");
     const getUserResponse = await request(app)
