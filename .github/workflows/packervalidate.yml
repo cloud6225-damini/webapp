@@ -1,9 +1,9 @@
 name: Packer Validation
  
 on:
-  push:
+  pull_request:
     branches:
-        - assignment04
+        - main
  
 jobs:
   build:

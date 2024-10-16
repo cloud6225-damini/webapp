@@ -63,6 +63,7 @@ source "amazon-ebs" "ubuntu_image" {
   ami_description             = local.image_desc
   vpc_id                      = var.network_vpc_id
   subnet_id                   = var.network_subnet_id
+  ami_users                   = []
   associate_public_ip_address = true
 
   tags = {
