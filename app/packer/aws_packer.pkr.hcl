@@ -8,12 +8,12 @@ packer {
 }
 
 variable "aws_region" {
-  default = "us-east-1"
+  default = "ca-central-1"
 }
 
 variable "source_ami" {
   description = "Ubuntu 24.04 LTS AMI ID"
-  default     = "ami-0866a3c8686eaeeba"
+  default     = "ami-0eb9fdcf0d07bd5ef"
 }
 
 variable "instance_type" {
@@ -22,12 +22,12 @@ variable "instance_type" {
 
 variable "vpc_id" {
   description = "VPC ID where the instance should be launched"
-  default     = "vpc-0a490082e6a32b205"
+  default     = "vpc-0279dafd1660f25b5"
 }
 
 variable "subnet_id" {
   description = "Subnet ID in the specified VPC"
-  default     = "subnet-064700dacecb238d3"
+  default     = "subnet-061a9331f680cc38b"
 }
 
 variable "ami_name" {
