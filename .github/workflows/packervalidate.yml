@@ -26,6 +26,6 @@ jobs:
       - name: Run packer fmt
         run: packer fmt -check app/packer/aws_packer.pkr.hcl
  
-      - name: Run packer validate
+      - name: Run Packer validate
         run: |
           packer validate app/packer/aws_packer.pkr.hcl
