@@ -1,0 +1,64 @@
+name: Packer Build
+ 
+on:
+  push:
+    branches:
+        - assignment04
+ 
+env:
+  PORT: ${{secrets.PORT}}
+  DATABASE_NAME: ${{secrets.DB_NAME}}
+  DATABASE_PASSWORD: ${{secrets.DB_PASSWORD}}
+  DATABASE_USER: ${{secrets.DB_USER}}
+  HOST: ${{secrets.DB_HOST}}
+ 
+jobs:
+  build:
+    name: Packer Build Check
+    runs-on: ubuntu-latest
+ 
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+ 
+    - name: Create .env
+      run: |
+        touch .env
+        echo "PORT=${{secrets.PORT}}" >> .env
+        echo "DB_NAME=${{secrets.DB_NAME}}" >> .env
+        echo "DB_PASSWORD=${{secrets.DB_PASSWORD}}" >> .env
+        echo "DB_USER=${{secrets.DB_USER}}" >> .env
+        echo "DB_HOST=${{secrets.DB_HOST}}" >> .env
+        cat .env
+ 
+    - name: Zip the webapp
+      run: zip -r webapp.zip .
+ 
+    - name: Check if webapp.zip exists
+      run: |
+        if [ -f ./webapp.zip ]; then
+          echo "webapp.zip exists."
+        else
+          echo "webapp.zip Does Not Exists."
+          exit 1
+        fi
+ 
+    - name: Configure the AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{secrets.AWS_KEY}}
+        aws-secret-access-key: ${{secrets.AWS_PASSWORD}}
+        aws-region: ${{secrets.AWS_REGION}}
+ 
+    - name: Install the Packer
+      run: sudo apt-get install -y packer
+ 
+    - name: Install plugins
+      run: packer init app/packer/.
+ 
+    - name: Validate Packer
+      run: packer validate app/packer/.
+ 
+    - name: Build Packer Image
+      run: packer build app/packer/.
+      
