@@ -13,7 +13,7 @@ variable "aws_region" {
  
 variable "source_ami" {
   description = "Ubuntu 24.04 LTS AMI ID"
-  default     = "ami-0ea3c35c5c3284d82"
+  default     = "ami-0866a3c8686eaeeba"
 }
  
 variable "instance_type" {
