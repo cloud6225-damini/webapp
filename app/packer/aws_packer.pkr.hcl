@@ -55,14 +55,15 @@ locals {
 }
 
 source "amazon-ebs" "ubuntu" {
-  region          = var.aws_region
-  source_ami      = var.source_ami
-  instance_type   = var.instance_type
-  ssh_username    = "ubuntu"
-  ami_name        = "${var.ami_name}-${local.timestamp}"
-  ami_description = local.ami_description
-  vpc_id          = var.vpc_id
-  subnet_id       = var.subnet_id
+  region                      = var.aws_region
+  source_ami                  = var.source_ami
+  instance_type               = var.instance_type
+  ssh_username                = "ubuntu"
+  ami_name                    = "${var.ami_name}-${local.timestamp}"
+  ami_description             = local.ami_description
+  vpc_id                      = var.vpc_id
+  subnet_id                   = var.subnet_id
+  associate_public_ip_address = true
 
   tags = {
     Name        = "webapp-image"
