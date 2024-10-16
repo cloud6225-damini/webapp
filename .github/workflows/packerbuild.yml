@@ -1,64 +1,103 @@
 name: Packer Build
- 
+
 on:
   push:
     branches:
-        - assignment04
- 
+      - assignment04
+
 env:
-  PORT: ${{secrets.PORT}}
-  DATABASE_NAME: ${{secrets.DB_NAME}}
-  DATABASE_PASSWORD: ${{secrets.DB_PASSWORD}}
-  DATABASE_USER: ${{secrets.DB_USER}}
-  HOST: ${{secrets.DB_HOST}}
- 
+  PORT: ${{ secrets.PORT }}
+  DATABASE_NAME: ${{ secrets.DB_NAME }}
+  DATABASE_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DATABASE_USER: ${{ secrets.DB_USER }}
+  HOST: ${{ secrets.DB_HOST }}
+
 jobs:
   build:
     name: Packer Build Check
     runs-on: ubuntu-latest
- 
+
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.DB_NAME }}
+          MYSQL_USER: ${{ secrets.DB_USER }}
+          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
- 
-    - name: Create .env
-      run: |
-        touch .env
-        echo "PORT=${{secrets.PORT}}" >> .env
-        echo "DB_NAME=${{secrets.DB_NAME}}" >> .env
-        echo "DB_PASSWORD=${{secrets.DB_PASSWORD}}" >> .env
-        echo "DB_USER=${{secrets.DB_USER}}" >> .env
-        echo "DB_HOST=${{secrets.DB_HOST}}" >> .env
-        cat .env
- 
-    - name: Zip the webapp
-      run: zip -r webapp.zip .
- 
-    - name: Check if webapp.zip exists
-      run: |
-        if [ -f ./webapp.zip ]; then
-          echo "webapp.zip exists."
-        else
-          echo "webapp.zip Does Not Exists."
-          exit 1
-        fi
- 
-    - name: Configure the AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{secrets.AWS_KEY}}
-        aws-secret-access-key: ${{secrets.AWS_PASSWORD}}
-        aws-region: ${{secrets.AWS_REGION}}
- 
-    - name: Install the Packer
-      run: sudo apt-get install -y packer
- 
-    - name: Install plugins
-      run: packer init app/packer/.
- 
-    - name: Validate Packer
-      run: packer validate app/packer/.
- 
-    - name: Build Packer Image
-      run: packer build app/packer/.
-      
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create .env
+        run: |
+          touch .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_USER=${{ secrets.DB_USER }}" >> .env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          cat .env
+
+      - name: Zip the webapp
+        run: zip -r webapp.zip .
+
+      - name: Check if webapp.zip exists
+        run: |
+          if [ -f ./webapp.zip ]; then
+            echo "webapp.zip exists."
+          else
+            echo "webapp.zip Does Not Exist."
+            exit 1
+          fi
+
+      - name: Configure the AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_PASSWORD }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install Packer
+        run: sudo apt-get install -y packer
+
+      - name: Install plugins
+        run: packer init app/packer/.
+
+      - name: Validate Packer
+        run: packer validate app/packer/.
+
+      - name: Build Packer Image
+        run: packer build app/packer/.
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20.x"
+
+      - name: Install Dependencies
+        run: npm i
+
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h "127.0.0.1" --silent; do
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+          done
+
+      - name: Run Tests
+        run: npm test -- --forceExit
+        env:
+          PORT: ${{ secrets.PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_HOST: ${{ secrets.DB_HOST }}
