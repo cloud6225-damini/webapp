@@ -8,7 +8,7 @@ packer {
 }
  
 variable "aws_region" {
-  default = "us-east-2"
+  default = "us-east-1"
 }
  
 variable "source_ami" {
@@ -22,12 +22,12 @@ variable "instance_type" {
  
 variable "vpc_id" {
   description = "VPC ID where the instance should be launched"
-  default     = "vpc-076364b954e7bed4d"
+  default     = "vpc-0a490082e6a32b205"
 }
  
 variable "subnet_id" {
   description = "Subnet ID in the specified VPC"
-  default     = "subnet-00550c025d06b5058"
+  default     = "subnet-064700dacecb238d3"
 }
  
 variable "ami_name" {
