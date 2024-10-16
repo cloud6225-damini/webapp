@@ -7,72 +7,72 @@ packer {
   }
 }
 
-variable "aws_region" {
+locals {
+  image_desc   = "Web application image"
+  current_time = regex_replace(timestamp(), "[- TZ:]", "")
+}
+
+variable "region" {
   default = "ca-central-1"
 }
 
-variable "source_ami" {
-  description = "Ubuntu 24.04 LTS AMI ID"
+variable "ubuntu_ami_id" {
+  description = "AMI ID for Ubuntu 24.04 LTS"
   default     = "ami-0eb9fdcf0d07bd5ef"
 }
 
-variable "instance_type" {
+variable "instance_size" {
   default = "t2.micro"
 }
 
-variable "vpc_id" {
-  description = "VPC ID where the instance should be launched"
+variable "network_vpc_id" {
+  description = "VPC ID for instance deployment"
   default     = "vpc-0279dafd1660f25b5"
 }
 
-variable "subnet_id" {
-  description = "Subnet ID in the specified VPC"
+variable "network_subnet_id" {
+  description = "Subnet ID within the VPC"
   default     = "subnet-061a9331f680cc38b"
 }
 
-variable "ami_name" {
-  default = "webappAMI"
+variable "ami_identifier" {
+  default = "myWebAppAMI"
 }
 
-variable "MYSQL_USER" {
+variable "db_username" {
   type    = string
   default = "damini"
 }
 
-variable "MYSQL_PASSWORD" {
+variable "db_password" {
   type    = string
   default = "23101996"
 }
 
-variable "MYSQL_DATABASE" {
+variable "db_name" {
   type    = string
   default = "cloudApp"
 }
 
-locals {
-  ami_description = "Image for webapp"
-  timestamp       = regex_replace(timestamp(), "[- TZ:]", "")
-}
-
-source "amazon-ebs" "ubuntu" {
-  region                      = var.aws_region
-  source_ami                  = var.source_ami
-  instance_type               = var.instance_type
+source "amazon-ebs" "ubuntu_image" {
+  region                      = var.region
+  source_ami                  = var.ubuntu_ami_id
+  instance_type               = var.instance_size
   ssh_username                = "ubuntu"
-  ami_name                    = "${var.ami_name}-${local.timestamp}"
-  ami_description             = local.ami_description
-  vpc_id                      = var.vpc_id
-  subnet_id                   = var.subnet_id
+  ami_name                    = "${var.ami_identifier}-${local.current_time}"
+  ami_description             = local.image_desc
+  vpc_id                      = var.network_vpc_id
+  subnet_id                   = var.network_subnet_id
   associate_public_ip_address = true
 
   tags = {
     Name        = "webapp-image"
-    Environment = "Dev"
+    Environment = "Development"
   }
 }
 
 build {
-  sources = ["source.amazon-ebs.ubuntu"]
+  sources = ["source.amazon-ebs.ubuntu_image"]
 
   provisioner "file" {
     source      = "webapp.zip"
@@ -97,34 +97,26 @@ build {
       "sudo apt -y install mysql-server",
       "sudo systemctl enable mysql",
       "sudo systemctl start mysql",
-      "sudo mysql -e \"CREATE USER IF NOT EXISTS '${var.MYSQL_USER}' IDENTIFIED BY '${var.MYSQL_PASSWORD}';\"",
-      "sudo mysql -e \"CREATE DATABASE IF NOT EXISTS ${var.MYSQL_DATABASE};\"",
-      "sudo mysql -e \"GRANT ALL PRIVILEGES ON ${var.MYSQL_DATABASE}.* TO '${var.MYSQL_USER}';\"",
+      "sudo mysql -e \"CREATE USER IF NOT EXISTS '${var.db_username}' IDENTIFIED BY '${var.db_password}';\"",
+      "sudo mysql -e \"CREATE DATABASE IF NOT EXISTS ${var.db_name};\"",
+      "sudo mysql -e \"GRANT ALL PRIVILEGES ON ${var.db_name}.* TO '${var.db_username}';\"",
       "sudo apt install -y nodejs npm",
       "sudo apt install unzip -y",
       "node -v",
       "npm -v",
-
-      #"sudo mv /tmp/webapp.zip /opt",
       "sudo mv /tmp/webapp.service /etc/systemd/system",
       "sudo unzip /tmp/webapp.zip -d /opt/webapp",
       "sudo mv /tmp/.env /opt/webapp",
-
-      # Create and Set ownership csye6225 user with no login shell
       "sudo useradd -r -s /usr/sbin/nologin -m csye6225",
       "sudo chown -R csye6225:csye6225 /tmp/webapp.zip",
-
-      # Extract webapp and set up the systemd service
       "sudo chown -R csye6225:csye6225 /opt/webapp"
     ]
   }
 
   provisioner "shell" {
     inline = [
-      # Enable the service
       "sudo systemctl daemon-reload",
       "sudo systemctl enable webapp.service"
     ]
   }
-
 }
