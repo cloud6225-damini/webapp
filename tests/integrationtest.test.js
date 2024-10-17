@@ -3,11 +3,11 @@ const app = require("../app/server");
 const { createDatabase,sequelize } = require("../app/databaseConfig/databaseConnect");
 
 beforeAll(async () => {
-  await createDatabase(); // Database is initialized
+  await createDatabase(); 
 });
 
 afterAll(async () => {
-  await sequelize.close(); // Close the database connection
+  await sequelize.close(); 
 });
 
 describe("Integration Tests for User API", () => {
