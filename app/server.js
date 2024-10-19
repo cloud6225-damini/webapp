@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(validatePayload);
 
 app.use('/healthz', healthRoutes);
-app.use('/v1', userRoutes);
+app.use('/v2', userRoutes);
 
 app.all('/healthz', (req, res) => {
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
