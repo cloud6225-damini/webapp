@@ -54,6 +54,14 @@ variable "db_name" {
   default = "cloudApp"
 }
 
+variable "DEV_ACCOUNTID" {
+  default = "202533509492"
+}
+
+variable "DEMO_ACCOUNTID" {
+  default = "831926588227"
+}
+
 source "amazon-ebs" "ubuntu_image" {
   region                      = var.region
   source_ami                  = var.ubuntu_ami_id
@@ -63,7 +71,7 @@ source "amazon-ebs" "ubuntu_image" {
   ami_description             = local.image_desc
   vpc_id                      = var.network_vpc_id
   subnet_id                   = var.network_subnet_id
-  ami_users                   = []
+  ami_users                   = [var.DEV_ACCOUNTID,var.DEMO_ACCOUNTID]
   associate_public_ip_address = true
 
   tags = {
