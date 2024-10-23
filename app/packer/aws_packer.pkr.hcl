@@ -90,7 +90,8 @@ build {
       "sudo unzip /tmp/webapp.zip -d /opt/webapp",
       "sudo useradd -r -s /usr/sbin/nologin -m csye6225",
       "sudo chown -R csye6225:csye6225 /tmp/webapp.zip",
-      "sudo chown -R csye6225:csye6225 /opt/webapp"
+      "sudo chown -R csye6225:csye6225 /opt/webapp",
+      "sudo chmod -R 755 /opt/webapp"
     ]
   }
 
