@@ -7,7 +7,6 @@ After=network.target
 User=csye6225
 Group=csye6225
 WorkingDirectory=/opt/webapp
-EnvironmentFile=/opt/webapp/.env
 ExecStartPre=/usr/bin/npm install
 ExecStart=/usr/bin/node /opt/webapp/app/server.js
 Restart=on-failure
