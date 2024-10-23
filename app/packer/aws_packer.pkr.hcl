@@ -69,20 +69,8 @@ build {
   sources = ["source.amazon-ebs.ubuntu_image"]
 
   provisioner "file" {
-    source      = "webapp.zip"
-    destination = "/tmp/webapp.zip"
-    generated   = true
-  }
-
-  provisioner "file" {
     source      = "app/packer/scripts/webapp.service"
     destination = "/tmp/webapp.service"
-  }
-
-  provisioner "file" {
-    source      = ".env"
-    destination = "/tmp/.env"
-    generated   = true
   }
 
   provisioner "shell" {
@@ -94,7 +82,6 @@ build {
       "npm -v",
       "sudo mv /tmp/webapp.service /etc/systemd/system",
       "sudo unzip /tmp/webapp.zip -d /opt/webapp",
-      "sudo mv /tmp/.env /opt/webapp",
       "sudo useradd -r -s /usr/sbin/nologin -m csye6225",
       "sudo chown -R csye6225:csye6225 /tmp/webapp.zip",
       "sudo chown -R csye6225:csye6225 /opt/webapp"
