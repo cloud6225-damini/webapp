@@ -39,21 +39,6 @@ variable "ami_identifier" {
   default = "myWebAppAMI"
 }
 
-variable "db_username" {
-  type    = string
-  default = "damini"
-}
-
-variable "db_password" {
-  type    = string
-  default = "23101996"
-}
-
-variable "db_name" {
-  type    = string
-  default = "cloudApp"
-}
-
 variable "DEV_ACCOUNTID" {
   default = "202533509492"
 }
@@ -103,12 +88,6 @@ build {
   provisioner "shell" {
     inline = [
       "sudo apt update",
-      "sudo apt -y install mysql-server",
-      "sudo systemctl enable mysql",
-      "sudo systemctl start mysql",
-      "sudo mysql -e \"CREATE USER IF NOT EXISTS '${var.db_username}' IDENTIFIED BY '${var.db_password}';\"",
-      "sudo mysql -e \"CREATE DATABASE IF NOT EXISTS ${var.db_name};\"",
-      "sudo mysql -e \"GRANT ALL PRIVILEGES ON ${var.db_name}.* TO '${var.db_username}';\"",
       "sudo apt install -y nodejs npm",
       "sudo apt install unzip -y",
       "node -v",
