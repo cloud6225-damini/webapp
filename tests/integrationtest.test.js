@@ -19,12 +19,12 @@ describe("Integration Tests for User API", () => {
       password: "Damini@123",
     };
 
-    const postUserResponse = await request(app).post("/v2/user").send(reqBody);
+    const postUserResponse = await request(app).post("/v1/user").send(reqBody);
     expect(postUserResponse.statusCode).toBe(201); 
 
     const base64Token = Buffer.from(`${reqBody.email}:${reqBody.password}`).toString("base64");
     const getUserResponse = await request(app)
-      .get("/v2/user/self")
+      .get("/v1/user/self")
       .set("Authorization", `Basic ${base64Token}`);
     expect(getUserResponse.statusCode).toBe(200); 
     expect(getUserResponse.body.email).toBe(reqBody.email); 
@@ -45,14 +45,14 @@ describe("Integration Tests for User API", () => {
     const base64TokenforPut = Buffer.from(`${authToken.email}:${authToken.password}`).toString("base64");
 
     const putUserResponse = await request(app)
-      .put("/v2/user/self")
+      .put("/v1/user/self")
       .send(reqBody)
       .set("Authorization", `Basic ${base64TokenforPut}`);
     expect(putUserResponse.statusCode).toBe(204); 
 
     const base64Token = Buffer.from(`${authToken.email}:${reqBody.password}`).toString("base64");
     const getUserResponse = await request(app)
-      .get("/v2/user/self")
+      .get("/v1/user/self")
       .set("Authorization", `Basic ${base64Token}`);
     expect(getUserResponse.statusCode).toBe(200); 
     expect(getUserResponse.body.email).toBe(authToken.email); 
