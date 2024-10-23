@@ -69,6 +69,12 @@ build {
   sources = ["source.amazon-ebs.ubuntu_image"]
 
   provisioner "file" {
+    source      = "webapp.zip"
+    destination = "/tmp/webapp.zip"
+    generated   = true
+  }
+
+  provisioner "file" {
     source      = "app/packer/scripts/webapp.service"
     destination = "/tmp/webapp.service"
   }
