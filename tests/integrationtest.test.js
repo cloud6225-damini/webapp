@@ -15,11 +15,12 @@ describe("Integration Tests for User API", () => {
     const reqBody = {
       first_name: "Damini",
       last_name: "Th",
-      email: "t@gmail.com",
-      password: "Damini@123",
+      email: "sgjnsg@gmail.com",
+      password: "Damini@123456",
     };
 
     const postUserResponse = await request(app).post("/v1/user").send(reqBody);
+    console.log("postUserResponse",postUserResponse);
     expect(postUserResponse.statusCode).toBe(201); 
 
     const base64Token = Buffer.from(`${reqBody.email}:${reqBody.password}`).toString("base64");
@@ -38,8 +39,8 @@ describe("Integration Tests for User API", () => {
     };
 
     const authToken = {
-      email: "t@gmail.com",
-      password: "Damini@123",
+      email: "sgjnsg@gmail.com",
+      password: "Damini@123456",
     };
 
     const base64TokenforPut = Buffer.from(`${authToken.email}:${authToken.password}`).toString("base64");
