@@ -15,7 +15,7 @@ describe("Integration Tests for User API", () => {
     const reqBody = {
       first_name: "Damini",
       last_name: "Th",
-      email: "sgjnsg@gmail.com",
+      email: "daminitest1@gmail.com",
       password: "Damini@123456",
     };
 
@@ -39,7 +39,7 @@ describe("Integration Tests for User API", () => {
     };
 
     const authToken = {
-      email: "sgjnsg@gmail.com",
+      email: "daminitest1@gmail.com",
       password: "Damini@123456",
     };
 
