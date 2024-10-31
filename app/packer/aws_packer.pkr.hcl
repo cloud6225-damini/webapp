@@ -84,12 +84,12 @@ build {
 
   provisioner "file" {
     source      = "app/packer/scripts/webapp.service"
-    destination = "/tmp/webapp.service"  # Copy to /tmp first to avoid permission issues
+    destination = "/tmp/webapp.service" # Copy to /tmp first to avoid permission issues
   }
 
   # Upload amazon-cloudwatch-agent.json to /tmp to avoid permission issues
   provisioner "file" {
-    source      = "app/packer/amazon-cloudwatch-agent.json" 
+    source      = "app/packer/amazon-cloudwatch-agent.json"
     destination = "/tmp/amazon-cloudwatch-agent.json"
   }
 
@@ -111,17 +111,17 @@ build {
       # Move service file and CloudWatch configuration to protected directories
       "sudo mv /tmp/webapp.service /etc/systemd/system/webapp.service",
       "sudo mv /tmp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
-      
+
       # Set up application files and permissions
       "sudo unzip /tmp/webapp.zip -d /opt/webapp",
       "sudo useradd -r -s /usr/sbin/nologin -m csye6225",
       "sudo chown -R csye6225:csye6225 /opt/webapp",
       "sudo chmod -R 755 /opt/webapp",
-      
+
       # Create and set permissions for the log file
       "sudo touch /var/log/webapp.log",
       "sudo chown csye6225:csye6225 /var/log/webapp.log",
-      "sudo chmod 664 /var/log/webapp.log",  # Allows both the application and agent to write
+      "sudo chmod 664 /var/log/webapp.log", # Allows both the application and agent to write
 
       # Enable services on boot
       "sudo systemctl enable amazon-cloudwatch-agent.service",
