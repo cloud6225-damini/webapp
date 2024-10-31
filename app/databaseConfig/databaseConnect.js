@@ -1,6 +1,8 @@
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
 const mysql = require('mysql2/promise');
+const AWS = require('aws-sdk');
+const cloudwatch = new AWS.CloudWatch();
 
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
     host: process.env.DB_HOST,
@@ -14,7 +16,7 @@ const checkDbConnection = async () => {
         console.log('Successfully connected to the Database !!');
         return true;
     } catch (error) {
-        console.error('Database connection failed :', error);
+        console.error('Database connection failed:', error);
         return false;
     }
 };
@@ -46,5 +48,25 @@ const createNewTable = async () => {
     }
   };
 
+// Wrap database operations to measure and log duration
+const timedDbQuery = async (operation) => {
+    const start = Date.now();
+    const result = await operation();
+    const duration = Date.now() - start;
 
-module.exports = { sequelize, checkDbConnection, createDatabase };
+    cloudwatch.putMetricData({
+        MetricData: [
+            {
+                MetricName: 'DatabaseQueryDuration',
+                Dimensions: [{ Name: 'Service', Value: 'Database' }],
+                Unit: 'Milliseconds',
+                Value: duration
+            }
+        ],
+        Namespace: 'WebAppMetrics'
+    }).promise().catch(err => console.error("Error sending CloudWatch database metrics:", err));
+
+    return result;
+};
+
+module.exports = { sequelize, checkDbConnection, createDatabase, timedDbQuery };

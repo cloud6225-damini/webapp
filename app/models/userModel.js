@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../databaseConfig/databaseConnect');
+const ProfilePic = require('./profilePicModel'); 
 
 const User = sequelize.define('User', {
   id: {
@@ -32,7 +33,7 @@ const User = sequelize.define('User', {
   account_updated: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
-  },
+  }
 }, {
   timestamps: false,
   hooks: {
@@ -45,5 +46,8 @@ const User = sequelize.define('User', {
     },
   }
 });
+
+User.hasOne(ProfilePic, { foreignKey: 'userId', onDelete: 'CASCADE' });
+ProfilePic.belongsTo(User, { foreignKey: 'userId' });
 
 module.exports = User;

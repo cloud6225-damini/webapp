@@ -1,6 +1,11 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/userModel');
+const ProfilePic = require('../models/profilePicModel');
 const validator = require('validator');
+
+const AWS = require('aws-sdk');
+const s3 = new AWS.S3();
+const { v4: uuidv4 } = require('uuid');
 
 
 const encodedPass = async (password) => {
@@ -100,9 +105,89 @@ const getUser = async (id) => {
   });
 };
 
+
+const uploadProfilePic = async (userId, file) => {
+  // Check if the user already has a profile picture
+  const existingProfilePic = await ProfilePic.findOne({ where: { userId } });
+
+  if (existingProfilePic) {
+    // If a profile picture already exists, throw an error
+    throw new Error('User already has a profile picture. Please delete the existing image before uploading a new one.');
+  }
+
+  // Generate a new file ID and S3 key
+  const fileId = uuidv4();
+  const s3Key = `${userId}/${fileId}`;
+  const params = {
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: s3Key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  };
+
+  // Upload the new profile picture to S3
+  await s3.upload(params).promise();
+
+  // Save metadata to ProfilePic model
+  const profilePic = await ProfilePic.create({
+    id: fileId,
+    fileName: file.originalname,
+    s3Key: s3Key,
+    uploadDate: new Date(),
+    userId: userId
+  });
+
+  return {
+    file_name: profilePic.fileName,
+    id: profilePic.id,
+    url: profilePic.s3Key,
+    upload_date: profilePic.uploadDate,
+    user_id: profilePic.userId
+  };
+};
+
+
+const getProfilePic = async (userId) => {
+  const profilePic = await ProfilePic.findOne({ where: { userId } });
+
+  if (!profilePic) {
+    return null;
+  }
+
+  const response = {
+    file_name: profilePic.fileName,
+    id: profilePic.id,
+    url: profilePic.s3Key, 
+    upload_date: profilePic.uploadDate,
+    user_id: profilePic.userId,
+  };
+
+  return response;
+};
+
+
+const deleteProfilePic = async (userId) => {
+  const profilePic = await ProfilePic.findOne({ where: { userId } });
+
+  if (!profilePic) {
+    throw new Error('Profile picture not found'); 
+  }
+
+  const params = {
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: profilePic.s3Key,
+  };
+  await s3.deleteObject(params).promise();
+  await ProfilePic.destroy({ where: { userId } });
+};
+
+
 module.exports = {
   createUser,
   getUserByEmail,
   updateUserInfo,
-  getUser
+  getUser,
+  uploadProfilePic,
+  getProfilePic,
+  deleteProfilePic,
 };
