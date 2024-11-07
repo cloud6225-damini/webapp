@@ -120,16 +120,24 @@ const getProfilePicController = async (req, res) => {
     const userId = req.user.id;
     const profilePicData = await getProfilePic(userId);
 
+    // Check if profile picture data is null or undefined
+    if (!profilePicData) {
+      logger.warn(`Profile picture not found for user: ${userId}`);
+      recordApiTime('getProfilePic', startTime);
+      return res.status(404).json({ message: 'Profile picture not found' });
+    }
+
     logger.info('Profile picture retrieved successfully', { userId });
     recordApiTime('getProfilePic', startTime);
 
     res.status(200).json(profilePicData);
   } catch (error) {
-    logger.error(`Profile picture not found: ${error.message}`);
+    logger.error(`Error retrieving profile picture: ${error.message}`);
     recordApiTime('getProfilePic', startTime);
-    res.status(404).json({ message: 'Profile picture not found' });
+    res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 const deleteProfilePicController = async (req, res) => {
   const startTime = Date.now();

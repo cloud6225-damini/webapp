@@ -3,7 +3,7 @@ name: Packer Build
 on:
   push:
     branches:
-      - main
+      - assignment06_01
 
 env:
   PORT: ${{ secrets.PORT }}
