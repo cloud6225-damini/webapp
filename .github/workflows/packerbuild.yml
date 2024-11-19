@@ -1,9 +1,9 @@
-name: Packer Build
+name: Packer Build and Deploy
 
 on:
   push:
     branches:
-      - main
+      - assignment08
 
 env:
   PORT: ${{ secrets.PORT }}
@@ -13,8 +13,8 @@ env:
   HOST: ${{ secrets.DB_HOST }}
 
 jobs:
-  build:
-    name: Packer Build Check
+  build_and_deploy:
+    name: Run Tests, Build, and Deploy
     runs-on: ubuntu-latest
 
     services:
@@ -45,6 +45,7 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "SNS_TOPIC_ARN=${{ secrets.SNS_TOPIC_ARN }}" >> .env
           cat .env
 
       - name: Zip the webapp
@@ -58,25 +59,6 @@ jobs:
             echo "webapp.zip Does Not Exist."
             exit 1
           fi
-
-      - name: Configure the AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_PASSWORD }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Install Packer
-        run: sudo apt-get install -y packer
-
-      - name: Install plugins
-        run: packer init app/packer/.
-
-      - name: Validate Packer
-        run: packer validate app/packer/.
-
-      - name: Build Packer Image
-        run: packer build app/packer/.
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -101,3 +83,70 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_HOST: ${{ secrets.DB_HOST }}
+
+      - name: Configure the AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_PASSWORD }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install Packer
+        run: sudo apt-get install -y packer
+
+      - name: Install plugins
+        run: packer init app/packer/.
+
+      - name: Validate Packer
+        run: packer validate app/packer/.
+
+      - name: Build Packer Image and extract 
+        run: |
+          packer build app/packer/aws_packer.pkr.hcl | tee packer-output.log
+          AMI_ID=$(grep -oP 'AMI: \K(ami-[a-zA-Z0-9]+)' packer-output.log)
+          echo "AMI_ID=$AMI_ID"
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+          echo "::set-output name=ami_id::$AMI_ID"
+
+      - name: AWS Configure for Demo Account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.DEMO_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.DEMO_AWS_SECRET_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Check Launch Template Existence in Demo Account
+        id: check-template-demo
+        run: >
+          TEMPLATE_EXISTS="false"
+ 
+          if aws ec2 describe-launch-templates --launch-template-names ${{ secrets.LAUNCH_TEMPLATE_ID }} --query 'LaunchTemplates[0]' --output text; then
+            TEMPLATE_EXISTS="true"
+          fi
+ 
+          echo "TEMPLATE_EXISTS=$TEMPLATE_EXISTS" >> $GITHUB_ENV
+      - name: Update Launch Template
+        if: env.TEMPLATE_EXISTS == 'true'
+        run: >
+          aws ec2 create-launch-template-version --launch-template-name ${{
+          secrets.LAUNCH_TEMPLATE_ID }} --source-version "\$Default" --launch-template-data
+          "{\"ImageId\":\"${{ env.AMI_ID }}\"}"
+      - name: Refresh Auto-Scaling Group
+        if: env.TEMPLATE_EXISTS == 'true'
+        run: >
+          aws autoscaling start-instance-refresh --auto-scaling-group-name ${{
+          secrets.AUTO_SCALING_GROUP_NAME }} --strategy "Rolling"
+ 
+ 
+          while : ; do
+            STATUS=$(aws autoscaling describe-instance-refreshes --auto-scaling-group-name ${{ secrets.AUTO_SCALING_GROUP_NAME }} --query 'InstanceRefreshes[0].Status' --output text)
+            if [[ "$STATUS" == "Successful" ]]; then
+              echo "Instance refresh completed with status: $STATUS"
+              break
+            elif [[ "$STATUS" == "Cancelled" ]]; then
+              echo "Instance refresh failed"
+              exit 1
+            else
+              echo "Waiting for instance refresh..."
+              sleep 30
+            fi
+          done

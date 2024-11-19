@@ -1,12 +1,11 @@
 const bcrypt = require('bcrypt');
 const User = require('../models/userModel');
 const ProfilePic = require('../models/profilePicModel');
+const VerificationToken = require('../models/verificationEmailModel'); // New model
 const validator = require('validator');
-
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 const { v4: uuidv4 } = require('uuid');
-
 
 const encodedPass = async (password) => {
   const salt = await bcrypt.genSalt(10);
@@ -20,10 +19,9 @@ const isEmailValid = (email) => {
 const isValidPassword = (password) => {
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
   return passwordRegex.test(password);
-}; 
+};
 
 const createUser = async (req) => {
-
   if (!req.is('application/json')) {
     throw new Error('Please provide valid json format!');
   }
@@ -57,47 +55,58 @@ const createUser = async (req) => {
     last_name,
     email,
     password: hashedPassword,
+    verified: false,
+  });
+};
+
+// New function to save verification token to database
+const saveVerificationToken = async (email, token) => {
+  // First, delete any existing tokens for this user (to prevent reuse)
+  await VerificationToken.destroy({ where: { email } });
+
+  // Save the new token
+  return VerificationToken.create({
+    email,
+    token,
+    created_at: new Date(),
   });
 };
 
 const getUserByEmail = async (email) => {
-  return User.findOne( {where: { email } });
+  return User.findOne({ where: { email } });
 };
 
-
 const updateUserInfo = async (email, req) => {
+  if (!req.is('application/json')) {
+    throw new Error('Please provide Request body in JSON format!');
+  }
 
-    if (!req.is('application/json')) {
-      throw new Error('Please provide Request body in JSON format!');
-    }
-
-    const user = await User.findOne({ where: { email } });
-    
-    if (!user) {
-      throw new Error('User not found !!');
-    }
+  const user = await User.findOne({ where: { email } });
   
-    const { first_name, last_name, password, ...extraFields } = req.body;
+  if (!user) {
+    throw new Error('User not found !!');
+  }
 
-    if (Object.keys(extraFields).length > 0) {
-      throw new Error('Cannot update fields other than firstname, lastname or password !');
-    }
+  const { first_name, last_name, password, ...extraFields } = req.body;
 
-    if ( (first_name && typeof first_name !== 'string') || 
+  if (Object.keys(extraFields).length > 0) {
+    throw new Error('Cannot update fields other than firstname, lastname or password !');
+  }
+
+  if ((first_name && typeof first_name !== 'string') || 
     (last_name && typeof last_name !== 'string') || 
     (password && typeof password !== 'string')) {
-      throw new Error('Name and Password must be String !');
-    }
-  
-    if (first_name) user.first_name = first_name;
-    if (last_name) user.last_name = last_name;
-    if (password) user.password = await encodedPass(password);
+    throw new Error('Name and Password must be String !');
+  }
 
-    user.account_updated = new Date();
+  if (first_name) user.first_name = first_name;
+  if (last_name) user.last_name = last_name;
+  if (password) user.password = await encodedPass(password);
+
+  user.account_updated = new Date();
   
-    return user.save();
-  };
-  
+  return user.save();
+};
 
 const getUser = async (id) => {
   return User.findByPk(id, {
@@ -181,7 +190,6 @@ const deleteProfilePic = async (userId) => {
   await ProfilePic.destroy({ where: { userId } });
 };
 
-
 module.exports = {
   createUser,
   getUserByEmail,
@@ -190,4 +198,5 @@ module.exports = {
   uploadProfilePic,
   getProfilePic,
   deleteProfilePic,
+  saveVerificationToken, 
 };

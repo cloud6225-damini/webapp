@@ -1,13 +1,14 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../databaseConfig/databaseConnect');
 const ProfilePic = require('./profilePicModel'); 
+const VerificationToken = require('./verificationEmailModel.js');
 
 const User = sequelize.define('User', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true,
-    allowNull: false
+    allowNull: false,
   },
   first_name: {
     type: DataTypes.STRING,
@@ -33,7 +34,11 @@ const User = sequelize.define('User', {
   account_updated: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW,
-  }
+  },
+  verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   timestamps: false,
   hooks: {
@@ -44,10 +49,14 @@ const User = sequelize.define('User', {
     beforeUpdate: (user) => {
       user.account_updated = new Date();
     },
-  }
+  },
 });
 
-User.hasOne(ProfilePic, { foreignKey: 'userId', onDelete: 'CASCADE' });
-ProfilePic.belongsTo(User, { foreignKey: 'userId' });
+// Define relationships with constraints change this to sing file
+User.hasOne(ProfilePic, { foreignKey: 'userId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+ProfilePic.belongsTo(User, { foreignKey: 'userId', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+
+User.hasOne(VerificationToken, { foreignKey: 'email', sourceKey: 'email', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
+VerificationToken.belongsTo(User, { foreignKey: 'email', targetKey: 'email', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
 module.exports = User;
