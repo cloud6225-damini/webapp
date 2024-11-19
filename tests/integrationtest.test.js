@@ -6,7 +6,6 @@ const bcrypt = require("bcrypt");
 
 let transaction; 
 
-// Mock AWS SDK 
 jest.mock("aws-sdk", () => {
   const SNS = jest.fn(() => ({
     publish: jest.fn().mockReturnValue({
