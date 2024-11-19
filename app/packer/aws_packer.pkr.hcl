@@ -47,6 +47,11 @@ variable "DEMO_ACCOUNTID" {
   default = "831926588227"
 }
 
+variable "sns_topic_arn" {
+  description = "ARN of the SNS Topic for notifications"
+  default     = "arn:aws:sns:ca-central-1:831926588227:UserVerificationTopic"
+}
+
 source "amazon-ebs" "ubuntu_image" {
   region                      = var.region
   source_ami                  = var.ubuntu_ami_id
@@ -84,46 +89,47 @@ build {
 
   provisioner "file" {
     source      = "app/packer/scripts/webapp.service"
-    destination = "/tmp/webapp.service" # Copy to /tmp first to avoid permission issues
+    destination = "/tmp/webapp.service"
   }
 
-  # Upload amazon-cloudwatch-agent.json to /tmp to avoid permission issues
   provisioner "file" {
     source      = "app/packer/amazon-cloudwatch-agent.json"
     destination = "/tmp/amazon-cloudwatch-agent.json"
   }
 
-  # Install CloudWatch Agent, Node.js, and unzip
+  # Install CloudWatch Agent, Node.js, and other dependencies
   provisioner "shell" {
     inline = [
-      "sudo apt update",
-      "sudo apt install -y nodejs npm unzip",
+      # Update package index
+      "echo 'Updating package index...' && until sudo apt-get update -y; do echo 'Retrying apt-get update...'; sleep 5; done",
+
+      # Install required packages with retries
+      "echo 'Installing dependencies...' && until sudo apt-get install -y nodejs npm unzip; do echo 'Retrying apt-get install...'; sleep 5; done",
+
+      # Verify installations
       "node -v",
       "npm -v",
+
+      # Download and install Amazon CloudWatch Agent
       "wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb",
-      "sudo dpkg -i -E amazon-cloudwatch-agent.deb"
+      "sudo dpkg -i -E amazon-cloudwatch-agent.deb || echo 'CloudWatch Agent already installed'"
     ]
   }
 
   # Set up application, CloudWatch agent config, and logging permissions
   provisioner "shell" {
     inline = [
-      # Move service file and CloudWatch configuration to protected directories
       "sudo mv /tmp/webapp.service /etc/systemd/system/webapp.service",
       "sudo mv /tmp/amazon-cloudwatch-agent.json /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json",
-
-      # Set up application files and permissions
       "sudo unzip /tmp/webapp.zip -d /opt/webapp",
-      "sudo useradd -r -s /usr/sbin/nologin -m csye6225",
+      "sudo useradd -r -s /usr/sbin/nologin -m csye6225 || echo 'User csye6225 already exists'",
       "sudo chown -R csye6225:csye6225 /opt/webapp",
       "sudo chmod -R 755 /opt/webapp",
-
-      # Create and set permissions for the log file
       "sudo touch /var/log/webapp.log",
       "sudo chown csye6225:csye6225 /var/log/webapp.log",
-      "sudo chmod 664 /var/log/webapp.log", # Allows both the application and agent to write
-
-      # Enable services on boot
+      "sudo chmod 664 /var/log/webapp.log",
+      "echo 'SNS_TOPIC_ARN=${var.sns_topic_arn}' | sudo tee -a /etc/environment",
+      "echo 'AWS_REGION=${var.region}' | sudo tee -a /etc/environment",
       "sudo systemctl enable amazon-cloudwatch-agent.service",
       "sudo systemctl enable webapp.service"
     ]
