@@ -4,7 +4,7 @@ const { sequelize } = require("../app/databaseConfig/databaseConnect");
 const User = require("../app/models/userModel");
 const bcrypt = require("bcrypt");
 
-let transaction; // Transaction to isolate tests
+let transaction; 
 
 // Mock AWS SDK 
 jest.mock("aws-sdk", () => {
