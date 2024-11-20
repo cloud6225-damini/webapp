@@ -82,7 +82,7 @@ describe("Integration Tests for User API", () => {
 
   test("Create an account and validate using GET", async () => {
     // Test user creation
-    const postUserResponse = await request(app).post("/v2/user").send(testUser);
+    const postUserResponse = await request(app).post("/v1/user").send(testUser);
     console.debug("postUserResponse", postUserResponse.body);
     expect(postUserResponse.statusCode).toBe(201);
 
@@ -95,7 +95,7 @@ describe("Integration Tests for User API", () => {
     // Test retrieving created user
     const base64Token = createBase64Token(testUser.email, testUser.password);
     const getUserResponse = await request(app)
-      .get("/v2/user/self")
+      .get("/v1/user/self")
       .set("Authorization", `Basic ${base64Token}`);
     console.debug("getUserResponse", getUserResponse.body);
     expect(getUserResponse.statusCode).toBe(200);
