@@ -82,7 +82,7 @@ describe("Integration Tests for User API", () => {
 
   test("Create an account and validate using GET", async () => {
     // Test user creation
-    const postUserResponse = await request(app).post("/v1/user").send(testUser);
+    const postUserResponse = await request(app).post("/v2/user").send(testUser);
     console.debug("postUserResponse", postUserResponse.body);
     expect(postUserResponse.statusCode).toBe(201);
 
@@ -95,51 +95,10 @@ describe("Integration Tests for User API", () => {
     // Test retrieving created user
     const base64Token = createBase64Token(testUser.email, testUser.password);
     const getUserResponse = await request(app)
-      .get("/v1/user/self")
+      .get("/v2/user/self")
       .set("Authorization", `Basic ${base64Token}`);
     console.debug("getUserResponse", getUserResponse.body);
     expect(getUserResponse.statusCode).toBe(200);
     expect(getUserResponse.body.email).toBe(testUser.email);
   });
-
-  // test("Update an account and validate using GET", async () => {
-  //   const updatedUser = {
-  //     first_name: "ABC",
-  //     last_name: "XYZ",
-  //     password: "Th@123",
-  //   };
-
-  //   // Create and verify user
-  //   await createUserInDatabase(testUser, transaction);
-  //   await User.update(
-  //     { verified: true },
-  //     { where: { email: testUser.email }, transaction }
-  //   );
-
-  //   // Test user update
-  //   const base64TokenForPut = createBase64Token(
-  //     testUser.email,
-  //     testUser.password
-  //   );
-  //   const putUserResponse = await request(app)
-  //     .put("/v1/user/self")
-  //     .send(updatedUser)
-  //     .set("Authorization", `Basic ${base64TokenForPut}`);
-  //   console.debug("putUserResponse", putUserResponse.body);
-  //   expect(putUserResponse.statusCode).toBe(204);
-
-  //   // Test retrieving updated user
-  //   const base64TokenForGet = createBase64Token(
-  //     testUser.email,
-  //     updatedUser.password
-  //   );
-  //   const getUserResponse = await request(app)
-  //     .get("/v1/user/self")
-  //     .set("Authorization", `Basic ${base64TokenForGet}`);
-  //   console.debug("getUserResponse", getUserResponse.body);
-  //   expect(getUserResponse.statusCode).toBe(200);
-  //   expect(getUserResponse.body.email).toBe(testUser.email);
-  //   expect(getUserResponse.body.first_name).toBe(updatedUser.first_name);
-  //   expect(getUserResponse.body.last_name).toBe(updatedUser.last_name);
-  // });
 });

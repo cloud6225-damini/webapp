@@ -20,7 +20,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/healthz', healthRoutes);
-app.use('/v1', userRoutes);
+app.use('/v2', userRoutes);
 
 // Health Check Endpoint for Unsupported Methods
 app.all('/healthz', (req, res) => {
