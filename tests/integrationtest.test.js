@@ -81,7 +81,6 @@ describe("Integration Tests for User API", () => {
   };
 
   test("Create an account and validate using GET", async () => {
-    // Test user 
     const postUserResponse = await request(app).post("/v1/user").send(testUser);
     console.debug("postUserResponse", postUserResponse.body);
     expect(postUserResponse.statusCode).toBe(201);
