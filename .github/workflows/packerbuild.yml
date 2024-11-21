@@ -91,9 +91,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_PASSWORD }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install Packer
-        run: sudo apt-get install -y packer
-
       - name: Install plugins
         run: packer init app/packer/.
 
