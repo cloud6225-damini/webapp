@@ -86,7 +86,6 @@ describe("Integration Tests for User API", () => {
     expect(postUserResponse.statusCode).toBe(201);
 
     // Mock verification to bypass email check
-    
     await User.update(
       { verified: true },
       { where: { email: testUser.email }, transaction }
