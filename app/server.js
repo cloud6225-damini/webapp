@@ -18,7 +18,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Routes
+// Routes test
 app.use('/healthztest', healthRoutes);
 app.use('/v1', userRoutes);
 
