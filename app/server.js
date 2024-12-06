@@ -19,15 +19,15 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/healthz', healthRoutes);
+app.use('/healthztest', healthRoutes);
 app.use('/v1', userRoutes);
 
 // Health Check Endpoint for Unsupported Methods
-app.all('/healthz', (req, res) => {
+app.all('/healthztest', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.status(405).send();
-  logger.warn(`Unsupported method for /healthz: ${req.method}`);
+  logger.warn(`Unsupported method for /healthztest: ${req.method}`);
 });
 
 // 404 Handler

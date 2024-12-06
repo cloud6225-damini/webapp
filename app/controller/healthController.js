@@ -15,4 +15,5 @@ const getHealthStatus = async (req, res) => {
     }
 };
 
+
 module.exports = { getHealthStatus };
